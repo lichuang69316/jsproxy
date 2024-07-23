@@ -114,21 +114,28 @@ export default {
             parameter.headers.Authorization = getReqHeader("Authorization");
         }
 
-        const original_response = await fetch(new Request(url, request), parameter);
-        const original_response_clone = original_response.clone();
-        const original_text = original_response_clone.body;
-        const response_headers = original_response.headers;
-        const new_response_headers = new Headers(response_headers);
-        const status = original_response.status;
+        let original_response = await fetch(new Request(url, request), parameter);
+        let original_response_clone = original_response.clone();
+        let original_text = original_response_clone.body;
+        let response_headers = original_response.headers;
+        let new_response_headers = new Headers(response_headers);
+        let status = original_response.status;
+
+        // 处理重定向
+        if (status === 301 || status === 302) {
+            let location = response_headers.get("Location");
+            if (location) {
+                if (!location.startsWith("http")) {
+                    location = new URL(location, targetUrl).toString();
+                }
+                return Response.redirect(location, status);
+            }
+        }
 
         if (new_response_headers.get("Www-Authenticate")) {
             let auth = new_response_headers.get("Www-Authenticate");
             let re = new RegExp(newUrl.origin, 'g');
             new_response_headers.set("Www-Authenticate", response_headers.get("Www-Authenticate").replace(re, workers_url));
-        }
-
-        if (new_response_headers.get("Location")) {
-            return httpHandler(request, new_response_headers.get("Location"));
         }
 
         let response = new Response(original_text, {
