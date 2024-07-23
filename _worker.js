@@ -13,21 +13,11 @@ const PREFLIGHT_INIT = {
     }),
 };
 
-/**
- * 构造响应
- * @param {any} body 响应体
- * @param {number} status 响应状态码
- * @param {Object<string, string>} headers 响应头
- */
 function makeRes(body, status = 200, headers = {}) {
     headers['access-control-allow-origin'] = '*';
     return new Response(body, { status, headers });
 }
 
-/**
- * 构造新的URL对象
- * @param {string} urlStr URL字符串
- */
 function newUrl(urlStr) {
     try {
         return new URL(urlStr);
@@ -85,13 +75,11 @@ export default {
             });
         }
 
-        // 获取目标地址
         const targetUrl = url.searchParams.get('target');
         if (!targetUrl) {
             return new Response("Missing 'target' query parameter", { status: 400 });
         }
 
-        // 修改请求 URL 和 Host
         const newUrl = new URL(targetUrl);
         url.hostname = newUrl.hostname;
         url.pathname = newUrl.pathname + url.pathname;
@@ -121,7 +109,6 @@ export default {
         let new_response_headers = new Headers(response_headers);
         let status = original_response.status;
 
-        // 处理重定向
         if (status === 301 || status === 302) {
             let location = response_headers.get("Location");
             if (location) {
@@ -146,11 +133,6 @@ export default {
     },
 };
 
-/**
- * 处理HTTP请求
- * @param {Request} req 请求对象
- * @param {string} pathname 请求路径
- */
 function httpHandler(req, pathname) {
     const reqHdrRaw = req.headers;
 
@@ -170,7 +152,6 @@ function httpHandler(req, pathname) {
 
     const urlObj = newUrl(urlStr);
 
-    /** @type {RequestInit} */
     const reqInit = {
         method: req.method,
         headers: reqHdrNew,
@@ -180,12 +161,6 @@ function httpHandler(req, pathname) {
     return proxy(urlObj, reqInit, rawLen);
 }
 
-/**
- * 代理请求
- * @param {URL} urlObj URL对象
- * @param {RequestInit} reqInit 请求初始化对象
- * @param {string} rawLen 原始长度
- */
 async function proxy(urlObj, reqInit, rawLen) {
     const res = await fetch(urlObj.href, reqInit);
     const resHdrOld = res.headers;
